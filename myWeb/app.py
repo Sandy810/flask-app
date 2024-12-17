@@ -68,13 +68,11 @@ def index():
 
 def query_by_keyword(keyword, data):
     results = []  # 存放搜尋結果
-    print(f"搜尋關鍵字: {keyword}")  # 偵錯輸出
     for row in data:
         for col in row:  # 檢查每一欄的文字
             if isinstance(col, str):  # 確保內容是字串
                 similarity = fuzz.partial_ratio(keyword, col)  # 計算相似度
-                print(f"比對 '{keyword}' 和 '{col}' 的相似度: {similarity}")  # 偵錯輸出
-                if similarity >= 50:  # 設定相似度閾值
+                if similarity >= 60:  # 降低相似度閾值
                     results.append(row)
                     break  # 匹配到後跳過該行的其他欄位
     return results
