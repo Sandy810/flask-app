@@ -80,4 +80,6 @@ def query_by_keyword(keyword, data):
     return results
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    import os
+    port = int(os.environ.get('PORT', 5000))  # 使用 Render 提供的 PORT 環境變數
+    app.run(host='0.0.0.0', port=port)
