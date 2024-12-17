@@ -69,13 +69,13 @@ def index():
 def query_by_keyword(keyword, data):
     results = []  # 存放搜尋結果
     for row in data:
-        for col in row:  # 檢查每一欄的文字
-            if isinstance(col, str):  # 確保內容是字串
-                similarity = fuzz.partial_ratio(keyword, col)  # 計算相似度
-                if similarity >= 60:  # 降低相似度閾值
-                    results.append(row)
-                    break  # 匹配到後跳過該行的其他欄位
+        if len(row) >= 4 and row[2]:  # 確保該行至少有四個欄位且“細項說明”欄位不為 None
+            detail_column = row[2]  # 假設細項說明在第三個欄位，即索引為 2
+            similarity = fuzz.partial_ratio(keyword, detail_column)  # 計算相似度
+            if similarity >= 70:  # 提高相似度閾值，降低誤匹配
+                results.append(row)  # 如果匹配，將該行加入結果
     return results
+
 
 if __name__ == '__main__':
     import os
