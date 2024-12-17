@@ -3,5 +3,3 @@ gunicorn
 requests
 pdfplumber
 rapidfuzz
-sentence-transformers
-scikit-learn
