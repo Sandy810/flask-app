@@ -59,18 +59,24 @@ def extract_table_from_pdf(pdf_file_name):
 # 載入 Sentence Transformer 模型
 model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
 
-# 使用 NLP 進行關鍵字搜尋
 def query_by_keyword_nlp(keyword, data):
+    # 將關鍵字轉換為 2D 向量
     keyword_embedding = model.encode([keyword])
+    
     results = []
     for row in data:
         for col in row:
-            if isinstance(col, str):  # 只檢查字串欄位
+            if isinstance(col, str):  # 只處理字串欄位
+                # 將列資料轉換為 2D 向量
                 col_embedding = model.encode([col])
-                similarity = cosine_similarity([keyword_embedding], [col_embedding])
-                if similarity >= 0.7:  # 設定相似度閾值
+                
+                # 確保 embeddings 的形狀正確，並計算相似度
+                similarity = cosine_similarity(keyword_embedding, col_embedding)
+                
+                # 如果相似度超過 0.7，則將此行添加到結果中
+                if similarity >= 0.7:
                     results.append(row)
-                    break  # 匹配到後跳過該行的其他欄位
+                    break  # 匹配後跳過該行的其他欄位
     return results
 
 # 設定路由，處理 GET 和 POST 請求
