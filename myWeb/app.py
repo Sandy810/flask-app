@@ -1,11 +1,8 @@
 from flask import Flask, render_template, request
+from rapidfuzz import fuzz
 import requests
 import pdfplumber
 import os
-
-print("Current working directory:", os.getcwd())  # 確認執行環境
-print("Templates folder exists:", os.path.exists('templates/index.html'))  # 檢查模板是否存在
-
 
 app = Flask(__name__)
 
@@ -34,29 +31,23 @@ def download_pdf():
 
 def extract_table_from_pdf(pdf_file_name):
     data = []  # 存放處理後的表格數據
-    previous_row = None  # 初始化 previous_row 為 None，避免未賦值錯誤
+    previous_row = None  # 記錄前一行，處理欄位不完整的情況
     try:
         with pdfplumber.open(pdf_file_name) as pdf:
             for page_number, page in enumerate(pdf.pages, start=1):
                 tables = page.extract_tables()  # 提取所有表格
                 for table in tables:
                     for row in table:
-                        # 檢查是否存在換行符 \n 並合併
-                        row = [cell.replace("\n", " ") if isinstance(cell, str) else cell for cell in row]
+                        # 清理每個儲存格的內容，去除換行符和首尾空格
+                        row = [cell.replace("\n", "").strip() if isinstance(cell, str) else cell for cell in row]
                         
-                        # 檢查行是否缺少欄位(可能因合併欄位導致)
+                        # 若當前行缺少欄位，補全缺失的部分
                         if row:
                             if previous_row and len(row) < len(previous_row):
-                                # 合併欄位情況，補全缺失欄位
                                 for i in range(len(row), len(previous_row)):
                                     row.append(previous_row[i])
-
-                            # 處理補全後的行
                             data.append(row)
-                            # 更新 previous_row 以便處理下一行
-                            previous_row = row
-                        else:
-                            print(f"跳過空行: {row}")
+                            previous_row = row  # 更新 previous_row
         return data
     except Exception as e:
         print(f"提取過程中出現錯誤: {e}")
@@ -76,7 +67,16 @@ def index():
     return render_template('index.html', results=results)
 
 def query_by_keyword(keyword, data):
-    results = [row for row in data if keyword in row[2]]
+    results = []  # 存放搜尋結果
+    print(f"搜尋關鍵字: {keyword}")  # 偵錯輸出
+    for row in data:
+        for col in row:  # 檢查每一欄的文字
+            if isinstance(col, str):  # 確保內容是字串
+                similarity = fuzz.partial_ratio(keyword, col)  # 計算相似度
+                print(f"比對 '{keyword}' 和 '{col}' 的相似度: {similarity}")  # 偵錯輸出
+                if similarity >= 50:  # 設定相似度閾值
+                    results.append(row)
+                    break  # 匹配到後跳過該行的其他欄位
     return results
 
 if __name__ == '__main__':
